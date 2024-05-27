@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3Api::class
+)
 
 package com.example.livechat.screens
 
@@ -59,6 +61,12 @@ fun StatusScreen(vm: LCViewModel, navController: NavController) {
         })
 
         Scaffold(
+            bottomBar = {
+                BottomNavigationBar(
+                    selectedItem = BottomNavItem.STATUSLIST,
+                    navController = navController
+                )
+            },
             floatingActionButton = {
                 FAB {
                     launcher.launch("image/*")
@@ -86,7 +94,9 @@ fun StatusScreen(vm: LCViewModel, navController: NavController) {
                         if (myStatuses.isNotEmpty()) {
                             CommonRow(
                                 imageUrl = myStatuses[0].user.imageUrl,
-                                name = myStatuses[0].user.name
+                                title = myStatuses[0].user.name,
+                                subTitle = "00:00",
+                                timestamp = myStatuses[0].timestamp.toString()
                             ) {
                                 navigateTo(
                                     navController = navController,
@@ -97,7 +107,7 @@ fun StatusScreen(vm: LCViewModel, navController: NavController) {
                             val uniqueUsers = otherStatuses.map { it.user }.toSet().toList()
                             LazyColumn(modifier = Modifier.weight(1f)) {
                                 items(uniqueUsers) { user ->
-                                    CommonRow(imageUrl = user.imageUrl, name = user.name) {
+                                    CommonRow(imageUrl = user.imageUrl, title = user.name, subTitle = "11:11", timestamp = "") {
                                         navigateTo(
                                             navController = navController,
                                             DestinationScreen.SingleStatus.createRoute(myStatuses[0].user.userId!!)
@@ -108,10 +118,6 @@ fun StatusScreen(vm: LCViewModel, navController: NavController) {
                         }
 
                     }
-                    BottomNavigationMenu(
-                        selectedItem = BottomNavigationItem.STATUSLIST,
-                        navController = navController
-                    )
                 }
             }
         )
@@ -129,7 +135,6 @@ fun FAB(
         onClick = onFabClick,
         containerColor = MaterialTheme.colorScheme.secondary,
         shape = CircleShape,
-        modifier = Modifier.padding(bottom = 40.dp)
     ) {
         Icon(
             imageVector = Icons.Rounded.Edit,

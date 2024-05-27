@@ -1,9 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3Api::class
+)
 
 package com.example.livechat.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,29 +16,44 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.livechat.CommonProgressBar
 import com.example.livechat.CommonRow
+import com.example.livechat.CommonTopAppBar
 import com.example.livechat.DestinationScreen
 import com.example.livechat.LCViewModel
+import com.example.livechat.R
 import com.example.livechat.TitleText
 import com.example.livechat.navigateTo
 
@@ -62,7 +81,54 @@ fun ChatListScreen(vm: LCViewModel, navController: NavController) {
             showDialog.value = false
         }
 
+        var showMenu by remember { mutableStateOf(false) }
+
         Scaffold(
+            topBar = {
+                CommonTopAppBar(
+                    title = "LiveChat",
+                    canNavigateBack = true,
+                    actions = {
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(imageVector = Icons.Default.CameraAlt,
+                                contentDescription = "Camera")
+                        }
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(imageVector = Icons.Default.Search,
+                                contentDescription = "Search")
+                        }
+                        IconButton(onClick = { showMenu = !showMenu }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "More",
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text("Refresh")
+                                },
+                                onClick = { /* TODO */ },
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text("Settings")
+                                },
+                                onClick = { /* TODO */ },
+                            )
+                        }
+                    }
+                )
+            },
+            bottomBar = {
+                BottomNavigationBar(
+                    selectedItem = BottomNavItem.CHATLIST,
+                    navController = navController
+                )
+            },
             floatingActionButton = {
                 FAB(
                     showDialog = showDialog.value,
@@ -70,13 +136,13 @@ fun ChatListScreen(vm: LCViewModel, navController: NavController) {
                     onDismiss = onDismiss,
                     onAddChat = onAddChat
                 )
-            }, content = {
+            },
+            content = {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(it)
                 ) {
-                    TitleText(text = "Chats")
 
                     if (chats.isEmpty()) {
                         Column(
@@ -99,7 +165,9 @@ fun ChatListScreen(vm: LCViewModel, navController: NavController) {
                                     chat.user1
                                 }
 
-                                CommonRow(imageUrl = chatUser.imageUrl, name = chatUser.name) {
+                                val lastMessage = chat.lastMessage
+
+                                CommonRow(imageUrl = chatUser.imageUrl, title = chatUser.name, subTitle = lastMessage?.message, timestamp = lastMessage?.timestamp.toString()) {
                                     chat.chatId?.let{
                                         navigateTo(navController,DestinationScreen.SingleChat.createRoute(id=it))
                                     }
@@ -108,11 +176,6 @@ fun ChatListScreen(vm: LCViewModel, navController: NavController) {
                             }
                         }
                     }
-
-                    BottomNavigationMenu(
-                        selectedItem = BottomNavigationItem.CHATLIST,
-                        navController = navController
-                    )
                 }
             }
         )
@@ -159,8 +222,8 @@ fun FAB(
         onClick = { onFabClick.invoke() },
         containerColor = MaterialTheme.colorScheme.secondary,
         shape = CircleShape,
-        modifier = Modifier.padding(bottom = 40.dp)
     ) {
         Icon(imageVector = Icons.Rounded.Add, contentDescription = null, tint = Color.White)
     }
 }
+

@@ -90,4 +90,7 @@ dependencies {
     implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
 
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation ("androidx.compose.material:material-icons-extended:1.6.7")
+    implementation ("androidx.compose.material:material:1.5.4")
 }

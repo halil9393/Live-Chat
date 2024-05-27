@@ -1,6 +1,7 @@
 package com.example.livechat
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +15,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import com.example.livechat.data.TAG_FLOW
 import com.example.livechat.screens.ChatListScreen
 import com.example.livechat.screens.LoginScreen
 import com.example.livechat.screens.ProfileScreen
+import com.example.livechat.screens.SettingsScreen
 import com.example.livechat.screens.SignUpScreen
 import com.example.livechat.screens.SingleChatScreen
 import com.example.livechat.screens.SingleStatusScreen
@@ -36,6 +39,7 @@ sealed class DestinationScreen(var route:String){
     object SingleStatus : DestinationScreen("singleStatus/{userId}"){
         fun createRoute(userId:String) = "singleStatus/$userId"
     }
+    object Settings : DestinationScreen("settings")
 }
 
 @AndroidEntryPoint
@@ -61,15 +65,19 @@ class MainActivity : ComponentActivity() {
         val vm = hiltViewModel<LCViewModel>()
         NavHost(navController = navController, startDestination = DestinationScreen.SignUp.route){
             composable(DestinationScreen.SignUp.route){
+                Log.i(TAG_FLOW,"SignUpScreen")
                 SignUpScreen(navController,vm)
             }
             composable(DestinationScreen.Login.route){
+                Log.i(TAG_FLOW,"LoginScreen")
                 LoginScreen(vm,navController)
             }
             composable(DestinationScreen.ChatList.route){
+                Log.i(TAG_FLOW,"ChatListScreen")
                 ChatListScreen(vm,navController)
             }
             composable(DestinationScreen.SingleChat.route){
+                Log.i(TAG_FLOW,"SingleChatScreen")
                 val chatId = it.arguments?.getString("chatId")
                 chatId?.let {
                     SingleChatScreen(vm,navController,it)
@@ -77,17 +85,23 @@ class MainActivity : ComponentActivity() {
 
             }
             composable(DestinationScreen.StatusList.route){
+                Log.i(TAG_FLOW,"StatusScreen")
                 StatusScreen(vm,navController)
             }
             composable(DestinationScreen.Profile.route){
+                Log.i(TAG_FLOW,"ProfileScreen")
                 ProfileScreen(vm,navController)
             }
             composable(DestinationScreen.SingleStatus.route){
+                Log.i(TAG_FLOW,"SingleStatusScreen")
                 val userId = it.arguments?.getString("userId")
                 userId?.let {
                     SingleStatusScreen(vm,navController, it )
                 }
-
+            }
+            composable(DestinationScreen.Settings.route){
+                Log.i(TAG_FLOW,"SettingsScreen")
+                SettingsScreen()
             }
         }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,9 +21,11 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -44,6 +47,7 @@ import com.example.livechat.DestinationScreen
 import com.example.livechat.LCViewModel
 import com.example.livechat.navigateTo
 
+
 @Composable
 fun ProfileScreen(vm: LCViewModel, navController: NavController) {
 
@@ -55,42 +59,67 @@ fun ProfileScreen(vm: LCViewModel, navController: NavController) {
 
         val userData = vm.userData.value
         var name by rememberSaveable {
-            mutableStateOf(userData?.name?:"")
+            mutableStateOf(userData?.name ?: "")
         }
 
         var number by rememberSaveable {
-            mutableStateOf(userData?.number?:"")
+            mutableStateOf(userData?.number ?: "")
         }
+        Scaffold(
+            bottomBar = {
+                BottomNavigationBar(
+                    selectedItem = BottomNavItem.PROFILE,
+                    navController = navController
+                )
+            },
+            content = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(it)
+                ) {
+                    ProfileContent(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(8.dp),
+                        vm = vm,
+                        name = name,
+                        number = number,
+                        onNameChange = { name = it },
+                        onNumberChange = { number = it },
+                        onSave = {
+                            vm.createOrUpdateProfile(
+                                name = name, number = number
+                            )
+                        },
+                        onBack = {
+                            navigateTo(
+                                navController = navController,
+                                route = DestinationScreen.ChatList.route
+                            )
+                        },
+                        onLogout = {
+                            vm.logout()
+                            navigateTo(
+                                navController = navController,
+                                route = DestinationScreen.Login.route
+                            )
+                        }
+                    )
+                    Button(
+                        onClick = {
+                            navigateTo(navController, DestinationScreen.Settings.route)
+                        },
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Text(text = "Settings")
 
-        Column {
-            ProfileContent(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(8.dp),
-                vm = vm,
-                name = name,
-                number = number,
-                onNameChange = { name=it },
-                onNumberChange = { number = it },
-                onSave = {
-                         vm.createOrUpdateProfile(
-                             name=name, number = number
-                         )
-                },
-                onBack = {
-                         navigateTo(navController = navController, route=DestinationScreen.ChatList.route)
-                },
-                onLogout = {
-                    vm.logout()
-                    navigateTo(navController=navController, route=DestinationScreen.Login.route)
+                    }
+
                 }
-            )
-            BottomNavigationMenu(
-                selectedItem = BottomNavigationItem.PROFILE,
-                navController = navController
-            )
-        }
+            })
+
     }
 }
 
@@ -150,7 +179,6 @@ fun ProfileContent(
             Text(text = "Save", Modifier.clickable {
                 onSave.invoke()
             })
-
 
 
         }

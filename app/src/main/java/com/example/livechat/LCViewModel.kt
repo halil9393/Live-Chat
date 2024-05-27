@@ -98,9 +98,13 @@ class LCViewModel @Inject constructor(
     }
 
     fun onSendReply(chatID: String, message: String) {
-        val time = Calendar.getInstance().time.toString()
+//        val time = Calendar.getInstance().timeInMillis.toString()
+        val time = System.currentTimeMillis().toString()
         val msg = Message(userData.value?.userId, message, time)
         db.collection(CHATS).document(chatID).collection(MESSAGE).document().set(msg)
+        db.collection(CHATS).document(chatID).update(mapOf(
+            "lastMessage" to msg
+        ))
     }
 
     fun signUp(name: String, number: String, email: String, password: String) {
@@ -227,6 +231,9 @@ class LCViewModel @Inject constructor(
 
         eventMutableState.value = Event(message)
         inProcess.value = false
+        inProcessChats.value = false
+        inProgressChatMessage.value = false
+        inProgressStatus.value = false
 
     }
 
@@ -267,6 +274,7 @@ class LCViewModel @Inject constructor(
                                 val id = db.collection(CHATS).document().id
                                 val chat = ChatData(
                                     chatId = id,
+                                    lastMessage = null,
                                     ChatUser(
                                         userData.value?.userId,
                                         userData.value?.name,

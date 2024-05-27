@@ -16,6 +16,7 @@ data class UserData(
 
 data class ChatData(
     val chatId:String?="",
+    val lastMessage:Message?=null,
     val user1:ChatUser=ChatUser(),
     val user2:ChatUser= ChatUser(),
 )

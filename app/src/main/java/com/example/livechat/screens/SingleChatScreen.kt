@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.livechat.LCViewModel
 import com.example.livechat.data.Message
+import kotlinx.coroutines.coroutineScope
 
 @Composable
 fun SingleChatScreen(vm: LCViewModel, navController: NavController, chatId: String) {
@@ -59,11 +62,18 @@ fun SingleChatScreen(vm: LCViewModel, navController: NavController, chatId: Stri
     val chatUser =
         if (myUser?.userId == currentChat.user1.userId) currentChat.user2 else currentChat.user1
 
-    LaunchedEffect(key1 = Unit) {
+    val listState = rememberLazyListState()
 
+    LaunchedEffect(key1 = Unit) {
         vm.populateMessages(chatId)
     }
+
+    LaunchedEffect(chatMessage.value) {
+        if(chatMessage.value.isNotEmpty()) listState.animateScrollToItem(chatMessage.value.size-1)
+    }
+
     BackHandler {
+        navController.popBackStack()
         vm.depopulateMessage()
     }
 
@@ -74,6 +84,7 @@ fun SingleChatScreen(vm: LCViewModel, navController: NavController, chatId: Stri
         }
         MessageBox(
             modifier = Modifier.weight(1f),
+            state = listState,
             chatMessages = chatMessage.value,
             currentUserId = myUser?.userId ?: ""
         )
@@ -84,8 +95,13 @@ fun SingleChatScreen(vm: LCViewModel, navController: NavController, chatId: Stri
 }
 
 @Composable
-fun MessageBox(modifier: Modifier, chatMessages: List<Message>, currentUserId: String) {
-    LazyColumn(modifier = modifier) {
+fun MessageBox(
+    modifier: Modifier,
+    state: LazyListState,
+    chatMessages: List<Message>,
+    currentUserId: String
+) {
+    LazyColumn(modifier = modifier, state = state) {
         items(chatMessages) { msg ->
             val alignment = if (msg.sendBy == currentUserId) Alignment.End else Alignment.Start
             val color = if (msg.sendBy == currentUserId) Color(0xFF68C400) else Color(0xFFC0C0C0)
