@@ -138,7 +138,7 @@ fun CommonDivider() {
 @Composable
 fun CommonImage(
     data: String?,
-    modifier: Modifier = Modifier.wrapContentSize(),
+    modifier: Modifier = Modifier.wrapContentSize().fillMaxSize(),
     contentScale: ContentScale = ContentScale.Crop
 ) {
     val painter = rememberImagePainter(data = data)
@@ -262,7 +262,7 @@ fun ProfileImage(imageUrl: String?, vm: LCViewModel) {
             Card(
                 shape = CircleShape, modifier = Modifier
                     .padding(8.dp)
-                    .size(100.dp)
+                    .size(200.dp)
             ) {
 
                 CommonImage(data = imageUrl)

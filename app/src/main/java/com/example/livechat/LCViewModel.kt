@@ -23,7 +23,6 @@ import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 
@@ -102,9 +101,11 @@ class LCViewModel @Inject constructor(
         val time = System.currentTimeMillis().toString()
         val msg = Message(userData.value?.userId, message, time)
         db.collection(CHATS).document(chatID).collection(MESSAGE).document().set(msg)
-        db.collection(CHATS).document(chatID).update(mapOf(
-            "lastMessage" to msg
-        ))
+        db.collection(CHATS).document(chatID).update(
+            mapOf(
+                "lastMessage" to msg
+            )
+        )
     }
 
     fun signUp(name: String, number: String, email: String, password: String) {
@@ -193,16 +194,68 @@ class LCViewModel @Inject constructor(
             inProcess.value = true
             db.collection(USER_NODE).document(uid).get().addOnSuccessListener {
                 if (it.exists()) {
-                    //update user data
+                    db.collection(USER_NODE).document(uid).update(
+                        mapOf(
+                            "name" to userData.name,
+                            "number" to userData.number,
+                            "imageUrl" to userData.imageUrl
+                        )
+                    )
+                    inProcess.value = false
+                    getUserData(uid)
                 } else {
                     db.collection(USER_NODE).document(uid).set(userData)
                     inProcess.value = false
                     getUserData(uid)
-
                 }
             }.addOnFailureListener {
                 handleException(it, "Cannot retrive user")
             }
+
+            //update on chats
+            inProcess.value = true
+            db.collection(CHATS).where(
+                Filter.equalTo("user1.userId", uid),
+                ).addSnapshotListener { value, error ->
+                if (error != null) {
+                    handleException(error)
+                }
+                if (value != null) {
+                    value.documents.mapNotNull {
+                        it.toObject<ChatData>()
+                    }.forEach {
+                        db.collection(CHATS).document(it.chatId!!).update(
+                            mapOf(
+                                "user1" to userData
+                            )
+                        )
+                    }
+                    inProcess.value = false
+                }
+            }
+
+            //update on chats
+            inProcess.value = true
+            db.collection(CHATS).where(
+                Filter.equalTo("user2.userId", uid),
+            ).addSnapshotListener { value, error ->
+                if (error != null) {
+                    handleException(error)
+                }
+                if (value != null) {
+                    value.documents.mapNotNull {
+                        it.toObject<ChatData>()
+                    }.forEach {
+                        db.collection(CHATS).document(it.chatId!!).update(
+                            mapOf(
+                                "user2" to userData
+                            )
+                        )
+                    }
+                    inProcess.value = false
+                }
+            }
+
         }
     }
 
@@ -326,7 +379,7 @@ class LCViewModel @Inject constructor(
     }
 
     fun populateStatuses() {
-        val timeDelta = 24L * 60 *60 *1000
+        val timeDelta = 24L * 60 * 60 * 1000
         val cutOff = System.currentTimeMillis() - timeDelta
         inProgressStatus.value = true
         db.collection(CHATS).where(
@@ -334,30 +387,28 @@ class LCViewModel @Inject constructor(
                 Filter.equalTo("user1.userId", userData.value?.userId),
                 Filter.equalTo("user2.userId", userData.value?.userId)
             )
-        ).addSnapshotListener{
-            value, error ->
-            if(error!=null){
+        ).addSnapshotListener { value, error ->
+            if (error != null) {
                 handleException(error)
             }
 
-            if(value!=null){
+            if (value != null) {
                 val currentConections = arrayListOf(userData.value?.userId)
                 val chats = value.toObjects<ChatData>()
-                chats.forEach{
-                    chat ->
-                    if(chat.user1.userId== userData.value?.userId){
+                chats.forEach { chat ->
+                    if (chat.user1.userId == userData.value?.userId) {
                         currentConections.add(chat.user2.userId)
-                    }else{
+                    } else {
                         currentConections.add(chat.user1.userId)
                     }
                 }
-                db.collection(STATUS).whereGreaterThan("timestamp",cutOff).whereIn("user.userId",currentConections).addSnapshotListener{
-                    value, error->
-                    if(error!=null){
+                db.collection(STATUS).whereGreaterThan("timestamp", cutOff)
+                    .whereIn("user.userId", currentConections).addSnapshotListener { value, error ->
+                    if (error != null) {
                         handleException(error)
                     }
 
-                    if(value!=null){
+                    if (value != null) {
                         status.value = value.toObjects()
                         inProgressStatus.value = false
                     }
