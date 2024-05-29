@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.livechat.data.CHATS
 import com.example.livechat.data.ChatData
 import com.example.livechat.data.ChatUser
@@ -23,6 +24,14 @@ import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import java.util.UUID
 import javax.inject.Inject
 
@@ -36,6 +45,7 @@ class LCViewModel @Inject constructor(
 
     var inProcess = mutableStateOf(false)
     var inProcessChats = mutableStateOf(false)
+    var inSubProcessChats = mutableStateOf(false)
     val eventMutableState = mutableStateOf<Event<String>?>(null)
     var signIn = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
@@ -46,6 +56,34 @@ class LCViewModel @Inject constructor(
 
     val status = mutableStateOf<List<Status>>(listOf())
     val inProgressStatus = mutableStateOf(false)
+
+    val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
+    val _searchedChatList = MutableStateFlow<List<ChatData>>(listOf())
+    val searchedChatList = searchText
+        .debounce(500L)
+        .onEach { inSubProcessChats.value = true }
+        .combine(_searchedChatList) { text, chatList ->
+
+            if (text.isBlank()) {
+                chatList
+            } else {
+                delay(300L)//temporary
+                chatList.filter {
+                    it.user1.name?.contains(text) ?: false || it.user2.name?.contains(text) ?: false
+                }
+            }
+        }
+        .onEach { inSubProcessChats.value = false }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            _searchedChatList.value
+        )
+
+    fun onSearchTextChanged(text: String) {
+        _searchText.value = text
+    }
 
     init {
         val currentUser = auth.currentUser
@@ -89,6 +127,9 @@ class LCViewModel @Inject constructor(
             }
             if (value != null) {
                 chats.value = value.documents.mapNotNull {
+                    it.toObject<ChatData>()
+                }
+                _searchedChatList.value = value.documents.mapNotNull {
                     it.toObject<ChatData>()
                 }
                 inProcessChats.value = false
@@ -216,7 +257,7 @@ class LCViewModel @Inject constructor(
             inProcess.value = true
             db.collection(CHATS).where(
                 Filter.equalTo("user1.userId", uid),
-                ).addSnapshotListener { value, error ->
+            ).addSnapshotListener { value, error ->
                 if (error != null) {
                     handleException(error)
                 }
@@ -404,15 +445,15 @@ class LCViewModel @Inject constructor(
                 }
                 db.collection(STATUS).whereGreaterThan("timestamp", cutOff)
                     .whereIn("user.userId", currentConections).addSnapshotListener { value, error ->
-                    if (error != null) {
-                        handleException(error)
-                    }
+                        if (error != null) {
+                            handleException(error)
+                        }
 
-                    if (value != null) {
-                        status.value = value.toObjects()
-                        inProgressStatus.value = false
+                        if (value != null) {
+                            status.value = value.toObjects()
+                            inProgressStatus.value = false
+                        }
                     }
-                }
             }
         }
     }

@@ -138,7 +138,7 @@ fun CommonDivider() {
 @Composable
 fun CommonImage(
     data: String?,
-    modifier: Modifier = Modifier.wrapContentSize().fillMaxSize(),
+    modifier: Modifier = Modifier.fillMaxSize(),
     contentScale: ContentScale = ContentScale.Crop
 ) {
     val painter = rememberImagePainter(data = data)
