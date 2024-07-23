@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -63,7 +64,22 @@ class MainActivity : ComponentActivity() {
     fun ChatAppNavigation(){
         val navController = rememberNavController()
         val vm = hiltViewModel<LCViewModel>()
-        NavHost(navController = navController, startDestination = DestinationScreen.SignUp.route){
+        NavHost(
+            navController = navController,
+            startDestination = DestinationScreen.SignUp.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left)
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left)
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right)
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right)
+            }
+        ){
             composable(DestinationScreen.SignUp.route){
                 Log.i(TAG_FLOW,"SignUpScreen")
                 SignUpScreen(navController,vm)
